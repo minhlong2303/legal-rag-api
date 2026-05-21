@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch.core.SearchResponse;
 import dev.langchain4j.data.embedding.Embedding;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,7 +20,8 @@ public class ElasticVectorService {
     private final ElasticsearchClient elasticsearchClient;
     private final EmbeddingService embeddingService;
 
-    private final String INDEX = "legal_vectors";
+    @Value("${elasticsearch.index}")
+    private String index;
 
     public void indexChunk(
             String documentId,
@@ -39,7 +41,7 @@ public class ElasticVectorService {
 
         IndexRequest<Map<String, Object>> request =
                 IndexRequest.of(i -> i
-                        .index(INDEX)
+                        .index(index)
                         .document(data)
                 );
 
@@ -65,12 +67,12 @@ public class ElasticVectorService {
 
         SearchResponse<Map> response =
                 elasticsearchClient.search(s -> s
-                                .index(INDEX)
+                                .index(index)
                                 .knn(k -> k
                                         .field("vector")
                                         .queryVector(queryVector)
-                                        .k(3)
-                                        .numCandidates(10)
+                                        .k(5)
+                                        .numCandidates(20)
                                 ),
                         Map.class
                 );

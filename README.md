@@ -25,6 +25,27 @@ Dự án **RAG_API** là một microservice Spring Boot thực hiện **Retrieva
 └────────┘ └────────┘ └───────────┘
 ```
 
+## 📖 Documentation Index
+
+**For Frontend Team:**
+- 🎨 **[FRONTEND_UI_UX_COMPLETE.md](./FRONTEND_UI_UX_COMPLETE.md)** - Complete UI/UX guide with React components (copy-paste ready)
+
+**For Backend/Implementation:**
+- 📘 **[START_HERE.md](./START_HERE.md)** - Getting started guide
+- 🏛️ **[CONSULTANT_SYSTEM_GUIDE.md](./CONSULTANT_SYSTEM_GUIDE.md)** - Consultant system architecture & design
+- 💻 **[CONSULTANT_IMPLEMENTATION_GUIDE.md](./CONSULTANT_IMPLEMENTATION_GUIDE.md)** - Backend implementation details
+- 📋 **[CONSULTANT_API_DOCUMENTATION.md](./CONSULTANT_API_DOCUMENTATION.md)** - Complete API reference
+- 📊 **[FORM_SYSTEM_GUIDE.md](./FORM_SYSTEM_GUIDE.md)** - Form system documentation
+- 📤 **[CONSULTANT_IMPORT_GUIDE.md](./CONSULTANT_IMPORT_GUIDE.md)** - Excel import feature guide
+
+**For DevOps/Deployment:**
+- 🚀 **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Production deployment instructions
+
+**For Troubleshooting:**
+- 🆘 **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common issues and solutions
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -102,6 +123,50 @@ Content-Type: application/json
 }
 ```
 
+### Query AI with Detail Level (Support Markdown Format)
+```http
+POST /api/ai/query
+Content-Type: application/json
+
+{
+  "question": "Nhà máy xử lý chất thải cần giấy phép gì?",
+  "detailLevel": "detailed"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "answer": "## Câu trả lời\n\nNhà máy xử lý chất thải **bắt buộc phải có giấy phép môi trường**, và **nếu xử lý chất thải nguy hại cần bổ sung giấy phép xử lý CTNH**.\n\n### Giải thích chi tiết\n\n* **Giấy phép môi trường**: Giấy phép tích hợp các loại giấy phép thành phần..."
+}
+```
+
+**Detail Levels:**
+| Level | Định dạng | Kích thước |
+|-------|-----------|-----------|
+| `brief` | Ngắn gọn (heading + bold + trích dẫn) | ~200 từ |
+| `normal` (default) | Vừa phải (giải thích + điều kiện + trích dẫn) | ~400 từ |
+| `detailed` | Chi tiết (giải thích sâu + ví dụ + ngoại lệ) | ~800+ từ |
+
+**Response Format (Markdown):**
+```markdown
+## Câu trả lời
+...
+
+### Giải thích
+* **Điều khoản 1**: ...
+* **Điều khoản 2**: ...
+
+### Điều kiện áp dụng
+1. Điều kiện thứ nhất
+2. Điều kiện thứ hai
+
+### Trích dẫn pháp luật
+* "Điều ... - Khoản ..."
+```
+
+> **💡 Tip**: Response field `answer` chứa Markdown format. Sử dụng React Markdown, Marked.js, hoặc markdown libraries khác để render đẹp trên UI.
+
 ## 🔄 RAG Pipeline
 
 ### Ingestion Flow
@@ -114,10 +179,10 @@ Content-Type: application/json
 ### Retrieval Flow
 1. **User Question** → `POST /api/ai/query`
 2. **Embed Question** → OpenAI embedding
-3. **KNN Search** → Elasticsearch (k=3, top 3 chunks)
-4. **Build Prompt** → Combine context + question
-5. **Generate Answer** → OpenAI GPT-4.1-mini
-6. **Return Result** → AI-generated answer
+3. **KNN Search** → Elasticsearch (k=5, top 5 chunks with improved relevance)
+4. **Build Prompt** → Combine context + question + format instructions
+5. **Generate Answer** → OpenAI GPT-4.1-mini (with Markdown format)
+6. **Return Result** → AI-generated answer with structured format
 
 ## 🛠️ Tech Stack
 
@@ -164,9 +229,16 @@ RAG_API/
 | `Connection refused localhost:27017` | Run MongoDB: `docker run -d -p 27017:27017 mongo:latest` |
 | `Connection refused localhost:9200` | Run Elasticsearch: `docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:8.13.0` |
 | `{"error": "no such index"}` | Create index `legal_vectors` in Elasticsearch |
-| `401 Unauthorized` | Check OpenAI API key in `application.yml` |
+| `❌ Lỗi máy chủ: Không thể gọi tới dịch vụ LLM` | **See QUICK_FIX.md** or run `.\diagnose-llm.ps1` |
+| `401 Unauthorized` | Check OpenRouter API key in `application.yml` |
 | `"Không tìm thấy thông tin phù hợp"` | Upload document first, then query |
-| `500 Internal Server Error` | Check logs: `mvn spring-boot:run 2>&1 \| tee logs.txt` |
+| `500 Internal Server Error` | **See TROUBLESHOOTING.md** for log analysis |
+
+**For detailed debugging:**
+- Quick fix (30 sec): `QUICK_FIX.md`
+- Full troubleshooting: `TROUBLESHOOTING.md`
+- Run diagnostics: `.\diagnose-llm.ps1`
+- Check logs: Look for "========== LLM API ERROR ==========" section in server output
 
 ## 📝 Logs Location
 
